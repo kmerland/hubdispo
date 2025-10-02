@@ -29,31 +29,37 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
   const layout = useHeaderLayout();
 
   const navItems = [
-    { id: "dashboard", labelKey: "nav.dashboard", shortLabelKey: "nav.dashboard", icon: "🏠" },
-    { id: "shipments", labelKey: "nav.shipments_full", shortLabelKey: "nav.shipments_short", icon: "📦" },
-    { id: "map", labelKey: "nav.map_full", shortLabelKey: "nav.map_short", icon: "🗺️" },
-    { id: "consolidation", labelKey: "nav.consolidation_full", shortLabelKey: "nav.consolidation_short", icon: "🤝" },
-    { id: "tax-compliance", labelKey: "nav.tax_compliance_full", shortLabelKey: "nav.tax_compliance_short", icon: "📊" },
-    { id: "intelligent-alerts", labelKey: "nav.intelligent_alerts_full", shortLabelKey: "nav.intelligent_alerts_short", icon: "🤖" },
-    { id: "faq", labelKey: "nav.faq_full", shortLabelKey: "nav.faq_short", icon: "❓" }
+    { id: "dashboard", label: "Tableau de bord", shortLabel: "Accueil", icon: "🏠" },
+    { id: "shipments", label: "Mes envois", shortLabel: "Envois", icon: "📦" },
+    { id: "map", label: "Carte trajets", shortLabel: "Carte", icon: "🗺️" },
+    { id: "consolidation", label: "Consolidation", shortLabel: "Groupage", icon: "🤝" },
+    { id: "tax-compliance", label: "Fiscalité & TVA", shortLabel: "TVA", icon: "📊" },
+    { id: "intelligent-alerts", label: "Alertes IA", shortLabel: "Alertes", icon: "🤖" },
+    { id: "faq", label: "FAQ", shortLabel: "Aide", icon: "❓" }
   ];
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      onNavigate("search", { query: searchQuery });
-      showToast({
-        type: 'info',
-        message: t('common.search_launched', { query: searchQuery }),
-        duration: 3000
-      });
-    } else {
-      showToast({
-        type: 'warning',
-        message: t('common.search_empty'),
-        duration: 3000
-      });
+ const handleSearch = () => {
+  if (searchQuery.trim()) {
+    // Sauvegarde temporaire de la requête
+    try {
+      sessionStorage.setItem('hubdispo_search_query', searchQuery);
+    } catch (e) {
+      console.warn("Could not save search query to sessionStorage");
     }
-  };
+    onNavigate("search"); // ✅ 1 seul argument
+    showToast({
+      type: 'info',
+      message: `Search launched : "${searchQuery}"`,
+      duration: 3000
+    });
+  } else {
+    showToast({
+      type: 'warning',
+      message: "Please enter a search term",
+      duration: 3000
+    });
+  }
+};
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -65,7 +71,7 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
     onNavigate("notifications");
     showToast({
       type: 'info',
-      message: t('common.new_notifications', { count: '3' }),
+      message: "3 nouvelles notifications",
       duration: 3000
     });
   };
@@ -74,7 +80,7 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
     onNavigate("messages");
     showToast({
       type: 'info',
-      message: t('common.new_messages', { count: '2' }),
+      message: "2 nouveaux messages",
       duration: 3000
     });
   };
@@ -82,11 +88,8 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
   return (
     <header className="border-b bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
       <ResponsiveContainer className="py-3">
-        {/* Container with Auto Layout: Logo Left | Menu Center | Actions Right */}
-          
-          {/* LEFT SECTION: Logo + Mobile Menu */}
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
-            {/* Mobile Menu Button */}
             {!layout.showCenterNav && (
               <Button 
                 variant="ghost" 
@@ -97,24 +100,18 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                 {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </Button>
             )}
-            
-            {/* Logo */}
             <div 
               className="flex items-center gap-2 cursor-pointer shrink-0" 
               onClick={() => onNavigate("homepage")}
             >
               <Package className="h-6 w-6 text-[#1E40AF]" />
               {layout.showFullLogo && (
-                <span className="font-semibold text-base whitespace-nowrap">
-                  hubdispo.be
-                </span>
+                <span className="font-semibold text-base whitespace-nowrap">hubdispo.be</span>
               )}
               {!layout.showFullLogo && (
                 <span className="font-semibold text-base">HD</span>
               )}
             </div>
-            
-            {/* Separator + Home Link on wide screens */}
             {layout.isUltraWide && (
               <div className="flex items-center gap-2 ml-2">
                 <div className="h-4 w-px bg-gray-300"></div>
@@ -125,14 +122,13 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                   className="text-gray-600 hover:text-[#1E40AF] px-2 h-8"
                 >
                   <Home className="h-3 w-3 mr-1" />
-                  <span className="text-sm">{t('nav.home_button')}</span>
+                  <span className="text-sm">Accueil</span>
                 </Button>
               </div>
             )}
           </div>
 
-          {/* CENTER SECTION: Main Navigation (Desktop) */}
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center min-w-0">
             {layout.showCenterNav && (
               <nav className="flex items-center gap-1">
                 {navItems.map((item) => (
@@ -148,14 +144,10 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                           : "text-gray-600 hover:text-[#1E40AF] hover:bg-gray-50"
                       }
                     `}
-                    title={t(item.labelKey)}
+                    title={item.label}
                   >
                     <span className="text-sm">{item.icon}</span>
-                    {layout.isUltraWide ? (
-                      <span className="text-xs">{t(item.labelKey)}</span>
-                    ) : (
-                      <span className="text-xs">{t(item.shortLabelKey)}</span>
-                    )}
+                    <span className="text-xs">{layout.isUltraWide ? item.label : item.shortLabel}</span>
                     {currentView === item.id && (
                       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#1E40AF] rounded-full"></div>
                     )}
@@ -165,27 +157,16 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
             )}
           </div>
 
-          {/* RIGHT SECTION: Actions + User Menu */}
           <div className="flex items-center gap-1 shrink-0">
-            
-            {/* Connection Status */}
-            {layout.showConnectionStatus && (
-              <ConnectionStatus />
-            )}
-            
-            {/* Language Selector */}
-            {layout.showLanguageSelector && (
-              <LanguageSelector variant="light" />
-            )}
-            
+            {layout.showConnectionStatus && <ConnectionStatus />}
+            {layout.showLanguageSelector && <LanguageSelector variant="light" />}
             {isAuthenticated ? (
               <>
-                {/* Search */}
                 {layout.showFullSearch && (
                   <div className="relative">
                     <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
                     <Input
-                      placeholder={t('nav.search_placeholder')}
+                      placeholder="Rechercher..."
                       className="pl-7 pr-3 w-32 h-8 text-xs border-gray-200"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -202,21 +183,17 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                     )}
                   </div>
                 )}
-                
-                {/* Search Button */}
                 {layout.showSearchIcon && (
                   <Button 
                     variant="ghost" 
                     size="icon"
                     className="w-8 h-8"
                     onClick={() => onNavigate("search")}
-                    title={t('common.search_placeholder')}
+                    title="Rechercher"
                   >
                     <Search className="h-4 w-4" />
                   </Button>
                 )}
-                
-                {/* New Shipment Button */}
                 {layout.showFullButtons ? (
                   <Button 
                     size="sm" 
@@ -224,7 +201,7 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                     onClick={() => onNavigate("new-shipment")}
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    <span className="text-xs">{t('dashboard.new_shipment')}</span>
+                    <span className="text-xs">Nouvel envoi</span>
                   </Button>
                 ) : layout.showCenterNav ? (
                   <Button 
@@ -233,42 +210,36 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                     onClick={() => onNavigate("new-shipment")}
                   >
                     <Plus className="h-3 w-3" />
-                    <span className="text-xs ml-1">{t('nav.shipments_short')}</span>
+                    <span className="text-xs ml-1">Envois</span>
                   </Button>
                 ) : (
                   <Button 
                     size="icon" 
                     className="bg-[#1E40AF] hover:bg-[#1E40AF]/90 w-8 h-8"
                     onClick={() => onNavigate("new-shipment")}
-                    title={t('dashboard.new_shipment')}
+                    title="Nouvel envoi"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
-                
-                {/* Quick Actions */}
                 <div className="flex items-center">
-                  
-                  {/* Support */}
                   {layout.showSupportButton && (
                     <Button 
                       variant="ghost" 
                       size="icon"
                       className="w-8 h-8"
-                      title={t('nav.support')}
+                      title="Support"
                       onClick={() => onNavigate("help")}
                     >
                       <HelpCircle className="h-4 w-4" />
                     </Button>
                   )}
-                  
-                  {/* Messages */}
                   {layout.showMessagesButton && (
                     <Button 
                       variant="ghost" 
                       size="icon"
                       className="relative w-8 h-8"
-                      title={t('nav.messages')}
+                      title="Messages"
                       onClick={() => onNavigate("messages")}
                     >
                       <MessageCircle className="h-4 w-4" />
@@ -277,28 +248,20 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                       </div>
                     </Button>
                   )}
-                  
-                  {/* Notifications (Always visible) */}
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="relative w-8 h-8"
                     onClick={() => onNavigate("notifications")}
-                    title={t('nav.notifications')}
+                    title="Notifications"
                   >
                     <Bell className="h-4 w-4" />
                     <div className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 bg-red-500 rounded-full flex items-center justify-center">
                       <span className="text-xs text-white font-bold leading-none">3</span>
                     </div>
                   </Button>
-                  
-                  {/* AI Alerts */}
-                  {layout.showCenterNav && (
-                    <AlertsBadge onNavigate={onNavigate} />
-                  )}
+                  {layout.showCenterNav && <AlertsBadge onNavigate={onNavigate} />}
                 </div>
-                
-                {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-1.5 px-1.5 h-8 ml-1">
@@ -317,16 +280,16 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                       <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
                       <p className="text-xs text-gray-600 truncate">{user?.email}</p>
                       <Badge className="bg-[#10B981] text-white text-xs mt-1">
-                        {t('plan.business')} {user?.plan || t('plan.starter')}
+                        {user?.plan || "Starter"}
                       </Badge>
                     </div>
                     <DropdownMenuItem onClick={() => onNavigate("dashboard")} className="text-sm">
                       <Home className="h-4 w-4 mr-2" />
-                      {t('nav.dashboard')}
+                      Tableau de bord
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onNavigate("profile")} className="text-sm">
                       <User className="h-4 w-4 mr-2" />
-                      {t('nav.profile')}
+                      Profil
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onNavigate("settings")} className="text-sm">
                       <Settings className="h-4 w-4 mr-2" />
@@ -357,7 +320,6 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
               </>
             ) : (
               <>
-                {/* Login/Register Buttons */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -376,22 +338,17 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
               </>
             )}
           </div>
+        </div>
       </ResponsiveContainer>
 
-      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && !layout.showCenterNav && (
         <div className="fixed inset-0 z-40">
-          {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          
-          {/* Menu Panel */}
           <div className="relative bg-white border-t shadow-lg">
             <div className="px-4 py-4 max-h-[80vh] overflow-y-auto">
-              
-              {/* Search Bar (Mobile) */}
               {isAuthenticated && (
                 <div className="mb-4 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -416,8 +373,6 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                   )}
                 </div>
               )}
-              
-              {/* Navigation Items */}
               <div className="space-y-1">
                 {navItems.map((item) => (
                   <button
@@ -437,12 +392,8 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                   </button>
                 ))}
               </div>
-              
-              {/* Quick Actions */}
               {isAuthenticated && (
                 <div className="mt-4 pt-4 border-t space-y-2">
-                  
-                  {/* New Shipment */}
                   <button
                     onClick={() => {
                       onNavigate("new-shipment");
@@ -453,8 +404,6 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                     <Plus className="h-5 w-5" />
                     Nouvel envoi
                   </button>
-                  
-                  {/* Messages */}
                   <button
                     onClick={() => {
                       onNavigate("messages");
@@ -468,8 +417,6 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                     </div>
                     <Badge className="bg-blue-500 text-white text-xs">2</Badge>
                   </button>
-                  
-                  {/* Help */}
                   <button
                     onClick={() => {
                       onNavigate("help");
@@ -482,23 +429,15 @@ export default function Header({ currentView, onNavigate }: HeaderProps) {
                   </button>
                 </div>
               )}
-              
-              {/* Language Selector & User Actions */}
               <div className="mt-4 pt-4 border-t space-y-3">
-                
-                {/* Language Selector */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">Langue</span>
                   <LanguageSelector variant="light" />
                 </div>
-                
-                {/* Connection Status */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">Connexion</span>
                   <ConnectionStatus />
                 </div>
-                
-                {/* User Actions for Non-Authenticated */}
                 {!isAuthenticated && (
                   <div className="space-y-2 pt-2">
                     <button
